@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101612">
+  <meta name="description" content="Play chess against Stockfish 19 or analyze a position in your browser.">
+  <title>GPT Chess</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%231c2920'/%3E%3Ctext x='50' y='72' font-size='76' text-anchor='middle' fill='%23e9eadc'%3E♞%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="GPT Chess home">
+        <span class="brand-mark">♞</span>
+        <span class="brand-name">GPT<span>CHESS</span></span>
+      </a>
+      <div class="topbar-center">
+        <span class="live-dot"></span>
+        <span id="engine-label">Connecting to Stockfish 19</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-button" id="sound-toggle" type="button" aria-label="Toggle sounds" title="Toggle sounds">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+        </button>
+        <button class="icon-button" id="flip-board" type="button" aria-label="Flip board" title="Flip board">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3 3 7l4 4M3 7h13a4 4 0 0 1 4 4v1M17 21l4-4-4-4m4 4H8a4 4 0 0 1-4-4v-1"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="main-layout">
+      <section class="play-area" aria-label="Chess game">
+        <div class="game-heading">
+          <div>
+            <div class="eyebrow">THE BOARD IS YOURS</div>
+            <h1>Make your move.</h1>
+          </div>
+          <div class="mode-switch" role="group" aria-label="Game mode">
+            <button class="mode-button active" id="play-mode" type="button">Play</button>
+            <button class="mode-button" id="analysis-mode" type="button">Analysis</button>
+          </div>
+        </div>
+
+        <div class="player-card opponent-card" id="opponent-card">
+          <div class="player-avatar engine-avatar">♞</div>
+          <div class="player-details">
+            <strong id="opponent-name">Stockfish 19</strong>
+            <span id="opponent-caption">Browser engine · Lite</span>
+          </div>
+          <div class="player-time" id="opponent-state">READY</div>
+        </div>
+
+        <div class="board-stage">
+          <div class="eval-track" aria-label="Position evaluation">
+            <div class="eval-fill" id="eval-fill"></div>
+            <span class="eval-score" id="eval-score">0.0</span>
+          </div>
+          <div class="board-frame">
+            <div class="chessboard" id="board" role="grid" aria-label="Chess board"></div>
+          </div>
+        </div>
+
+        <div class="player-card user-card" id="user-card">
+          <div class="player-avatar user-avatar">P</div>
+          <div class="player-details">
+            <strong id="user-name">You</strong>
+            <span id="user-caption">White · Playing</span>
+          </div>
+          <div class="player-time" id="user-state">YOUR TURN</div>
+        </div>
+
+        <div class="board-footer">
+          <div class="turn-indicator"><span class="turn-dot" id="turn-dot"></span><span id="turn-label">White to move</span></div>
+          <div class="board-footer-actions">
+            <button class="subtle-button" id="undo-move" type="button" title="Undo last move">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5M4 9h10a6 6 0 0 1 0 12h-2"/></svg>
+              Undo
+            </button>
+            <button class="subtle-button" id="new-game" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M5.6 9a7 7 0 0 1 11.6-2L20 12M4 12l2.8 5a7 7 0 0 0 11.6-2"/></svg>
+              New game
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="side-panel" aria-label="Game controls and analysis">
+        <section class="panel-card settings-card" id="settings-card">
+          <div class="panel-heading">
+            <div>
+              <div class="eyebrow">MATCH SETTINGS</div>
+              <h2>Game setup</h2>
+            </div>
+            <span class="settings-icon">✳</span>
+          </div>
+          <div class="setting-row">
+            <label for="play-as">Play as</label>
+            <select id="play-as">
+              <option value="w">White</option>
+              <option value="b">Black</option>
+            </select>
+          </div>
+          <div class="setting-row">
+            <label for="engine-depth">Engine depth</label>
+            <select id="engine-depth">
+              <option value="8">8 · Quick</option>
+              <option value="10">10 · Casual</option>
+              <option value="12" selected>12 · Balanced</option>
+              <option value="15">15 · Strong</option>
+              <option value="18">18 · Deep</option>
+            </select>
+          </div>
+          <div class="setting-note">Higher depth can take longer and use more of your device's CPU.</div>
+          <button class="primary-button" id="start-game" type="button">
+            <span>Start new game</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>
+          </button>
+        </section>
+
+        <section class="panel-card moves-card">
+          <div class="panel-heading moves-heading">
+            <div>
+              <div class="eyebrow">THE GAME SO FAR</div>
+              <h2>Move history</h2>
+            </div>
+            <button class="text-button" id="copy-pgn" type="button">Copy PGN</button>
+          </div>
+          <div class="move-list" id="move-list" aria-live="polite">
+            <div class="empty-moves"><span>01</span><span>Make the first move</span><span>· ·</span></div>
+          </div>
+          <div class="moves-bottom">
+            <span id="move-count">0 moves</span>
+            <button class="text-button" id="download-pgn" type="button">Export PGN ↗</button>
+          </div>
+        </section>
+
+        <section class="panel-card engine-card">
+          <div class="panel-heading">
+            <div>
+              <div class="eyebrow">LIVE POSITION</div>
+              <h2>Engine analysis</h2>
+            </div>
+            <span class="analysis-pulse" id="analysis-pulse"></span>
+          </div>
+          <div class="engine-readout">
+            <div class="readout-main">
+              <span class="readout-label">Evaluation</span>
+              <strong id="analysis-eval">0.00</strong>
+            </div>
+            <div class="readout-divider"></div>
+            <div class="readout-main">
+              <span class="readout-label">Depth</span>
+              <strong id="analysis-depth">—</strong>
+            </div>
+            <div class="readout-divider"></div>
+            <div class="readout-main">
+              <span class="readout-label">Nodes / sec</span>
+              <strong id="analysis-nps">—</strong>
+            </div>
+          </div>
+          <div class="best-line-label">BEST LINE</div>
+          <div class="best-line" id="best-line">Waiting for engine…</div>
+          <button class="secondary-button" id="analyze-button" type="button">Analyze position</button>
+        </section>
+
+        <div class="panel-footnote">
+          <span class="privacy-symbol">◈</span>
+          <span>Analysis runs on your device. Your moves are not sent to a game server.</span>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="site-footer">
+      <span>GPT CHESS <span class="footer-separator">/</span> BUILT FOR THE LOVE OF THE GAME</span>
+      <a href="https://github.com/nmrugg/stockfish.js" target="_blank" rel="noreferrer">Stockfish.js 19 · GPL-3.0</a>
+    </footer>
+  </div>
+
+  <dialog class="promotion-dialog" id="promotion-dialog" aria-label="Choose promotion piece">
+    <form method="dialog">
+      <div class="eyebrow">PROMOTION</div>
+      <h2>Choose a piece</h2>
+      <div class="promotion-options" id="promotion-options"></div>
+      <button class="text-button cancel-promotion" value="cancel">Cancel</button>
+    </form>
+  </dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
