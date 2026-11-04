@@ -7,7 +7,7 @@
   <meta name="description" content="Play chess against Stockfish 19 or analyze a position in your browser.">
   <title>GPT Chess</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%231c2920'/%3E%3Ctext x='50' y='72' font-size='76' text-anchor='middle' fill='%23e9eadc'%3E♞%3C/text%3E%3C/svg%3E">
-  <link rel="stylesheet" href="styles.css">
+
 </head>
 <body>
   <div class="app-shell">
@@ -187,6 +187,20 @@
     </form>
   </dialog>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script type="module" src="app.js"></script>
+  <script type="module">
+    async function unpack(value) {
+      const bytes = Uint8Array.from(atob(value.trim()), character => character.charCodeAt(0));
+      const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
+      return new Response(stream).text();
+    }
+    const response = await fetch("./site.bundle");
+    if (!response.ok) throw new Error("Could not load GPT Chess runtime");
+    const bundle = JSON.parse(await unpack(await response.text()));
+    const style = document.createElement("style");
+    style.textContent = bundle.css;
+    document.head.append(style);
+    window.GPT_CHESS_WORKER_URL = URL.createObjectURL(new Blob([bundle.worker], { type: "text/javascript" }));
+    await import(URL.createObjectURL(new Blob([bundle.app], { type: "text/javascript" })));
+  </script>
 </body>
 </html>
